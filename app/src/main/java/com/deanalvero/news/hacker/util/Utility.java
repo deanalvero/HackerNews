@@ -64,23 +64,23 @@ public class Utility {
 
             return String.format("%d %s by %s %d %s ago | %d %s",
                     scoreCount,
-                    scoreCount != 1 ? "points" : "point",
+                    (scoreCount != 1) ? "points" : "point",
                     by,
 //                    "",
 //                    "",
                     commentCount,
-                    commentCount != 1 ? "comments" : "comment"
+                    (commentCount != 1) ? "comments" : "comment"
                     );
         }
 
         return context.getString(R.string.description_topic_format,
                 scoreCount,
-                scoreCount != 1 ? context.getString(R.string.string_points) : context.getString(R.string.string_point),
+                (scoreCount != 1) ? context.getString(R.string.string_points) : context.getString(R.string.string_point),
                 by,
 //                0,
 //                "",
                 commentCount,
-                commentCount != 0 ? context.getString(R.string.string_comments) : context.getString(R.string.string_comment)
+                (commentCount != 1) ? context.getString(R.string.string_comments) : context.getString(R.string.string_comment)
         );
     }
 
