@@ -3,10 +3,7 @@ package com.deanalvero.news.hacker.util;
 import android.content.Context;
 
 import com.deanalvero.news.hacker.R;
-import com.deanalvero.news.hacker.model.CommentObject;
-import com.deanalvero.news.hacker.model.TopicObject;
-
-import java.util.Calendar;
+import com.deanalvero.news.hacker.model.ItemObject;
 import java.util.List;
 
 /**
@@ -30,12 +27,12 @@ public class Utility {
         return positionString;
     }
 
-    public static String getCommentAuthorString(Context context, CommentObject commentObject){
+    public static String getCommentAuthorString(Context context, ItemObject itemObject){
+        if (itemObject == null) return "";
 
-        String by = commentObject.getBy();
-        List<Long> longList = commentObject.getKids();
+        String by = itemObject.by;
+        List<Long> longList = itemObject.kids;
         int replyCount = (longList == null) ? 0 : longList.size();
-
 
         if (context == null){
             return String.format("%s (%d %s)",
@@ -52,17 +49,18 @@ public class Utility {
         );
     }
 
+    public static String getDescriptionString(Context context, ItemObject topicObject){
+        if (topicObject == null) return "";
 
-    public static String getDescriptionString(Context context, TopicObject topicObject){
-        int scoreCount = topicObject.getScore();
-        int commentCount = topicObject.getDescendants();
-        String by = topicObject.getBy();
+        int scoreCount = topicObject.score;
+        int commentCount = topicObject.descendants;
+        String by = topicObject.by;
 //        int hour = Calendar.getInstance().getTimeInMillis();
 
         if (context == null){
             //  In case you forgot to setContext for the adapter!
 
-            return String.format("%d %s by %s %d %s ago | %d %s",
+            return String.format("%d %s by %s | %d %s",
                     scoreCount,
                     (scoreCount != 1) ? "points" : "point",
                     by,
@@ -70,7 +68,7 @@ public class Utility {
 //                    "",
                     commentCount,
                     (commentCount != 1) ? "comments" : "comment"
-                    );
+            );
         }
 
         return context.getString(R.string.description_topic_format,
@@ -82,6 +80,13 @@ public class Utility {
                 commentCount,
                 (commentCount != 1) ? context.getString(R.string.string_comments) : context.getString(R.string.string_comment)
         );
+    }
+
+    public static String safeString(String string){
+        if (string == null){
+            return "";
+        }
+        return string;
     }
 
 }

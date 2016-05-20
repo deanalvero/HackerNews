@@ -6,4 +6,5 @@ package com.deanalvero.news.hacker.util;
 public class Constant {
 
     public static final String URL_BASE_WEB_SERVICE = "https://hacker-news.firebaseio.com/v0/";
+    public static final int FETCH_LIMIT_TOPIC = 10;
 }

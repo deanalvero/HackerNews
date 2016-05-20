@@ -1,37 +1,35 @@
 package com.deanalvero.news.hacker;
 
 import android.content.Intent;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 
-import com.deanalvero.news.hacker.adapter.TopicObjectRecyclerViewAdapter;
-import com.deanalvero.news.hacker.model.CommentObjectItem;
-import com.deanalvero.news.hacker.model.HackerNewsAPIModel;
-import com.deanalvero.news.hacker.manager.NAPIManager;
-import com.deanalvero.news.hacker.model.NewsAPIModel;
-import com.deanalvero.news.hacker.model.TopicObject;
-import com.deanalvero.news.hacker.model.TopicObjectItem;
+import com.deanalvero.news.hacker.adapter.TopicItemRecyclerViewAdapter;
+import com.deanalvero.news.hacker.manager.HDataManager;
+import com.deanalvero.news.hacker.model.FetchCommentItem;
+import com.deanalvero.news.hacker.model.FetchTopicItem;
+import com.deanalvero.news.hacker.model.ItemObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements NewsAPIModel.NewsAPIListener, TopicObjectRecyclerViewAdapter.TopicObjectRecyclerViewAdapterListener {
+
+public class MainActivity extends AppCompatActivity implements FetchTopicItem.FetchTopicItemListener, TopicItemRecyclerViewAdapter.TopicItemRecyclerViewAdapterListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private TopicObjectRecyclerViewAdapter mAdapter;
-    private NewsAPIModel mNewsAPI;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Toolbar mToolbar;
 
-    private ArrayList<TopicObjectItem> mTopicObjectItemList;
-    private static final String KEY_LIST_TOPICOBJECTITEM = "KEY_LIST_TOPICOBJECTITEM";
+    private TopicItemRecyclerViewAdapter mTopicItemRecyclerViewAdapter;
+    private List<ItemObject> mItemObjectList;
+    private LinearLayoutManager mLinearLayoutManager;
+    private CoordinatorLayout mCoordinatorLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,134 +39,187 @@ public class MainActivity extends AppCompatActivity implements NewsAPIModel.News
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
+
+        mLinearLayoutManager = new LinearLayoutManager(this);
+
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        mRecyclerView.setLayoutManager(getLinearLayoutManager());
-        mRecyclerView.setAdapter(getTopicObjectRecyclerViewAdapter());
+        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mRecyclerView.setAdapter(getTopicItemRecyclerViewAdapter());
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                fetchTopStories();
+                clearTopicObject();
+                fetchTopicObjectIds();
             }
         });
 
-//        List<TopicObjectItem> topicObjectItemList = NDataManager.getInstance().getTopicObjectItemList();
-//        if (topicObjectItemList != null){
-//            getTopicObjectRecyclerViewAdapter().setTopicObjectItemList(topicObjectItemList);
-//            return;
-//        }
 
-//        Log.e(TAG, "savedInstanceState = " + (savedInstanceState != null) );
+        fetchTopicObjectIds();     //  Will not fetch if currently fetching
+        updateUI();
+    }
 
-        if (savedInstanceState != null){
-            mTopicObjectItemList = savedInstanceState.getParcelableArrayList(MainActivity.KEY_LIST_TOPICOBJECTITEM);
-            getTopicObjectRecyclerViewAdapter().setTopicObjectItemList(mTopicObjectItemList);
+    private RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+
+            if (mLinearLayoutManager != null &&
+                    mLinearLayoutManager.findLastCompletelyVisibleItemPosition() == getItemObjectList().size() - 1){
+                fetchTopicObject();
+            }
         }
+    };
 
-        if (mTopicObjectItemList == null) {
-            fetchTopStories();
-        }
+    private void addOnScrollListenerToRecyclerView(){
+        if (mRecyclerView != null) mRecyclerView.addOnScrollListener(mOnScrollListener);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Log.e(TAG, "onSaveInstanceState");
-        outState.putParcelableArrayList(MainActivity.KEY_LIST_TOPICOBJECTITEM, mTopicObjectItemList);
-
+    private void clearOnScrollListenersToRecyclerView(){
+        if (mRecyclerView != null) mRecyclerView.clearOnScrollListeners();
     }
 
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-//        Log.e(TAG, "onRestoreInstanceState");
-//
-//        mTopicObjectItemList = savedInstanceState.getParcelableArrayList(MainActivity.KEY_LIST_TOPICOBJECTITEM);
-//        getTopicObjectRecyclerViewAdapter().setTopicObjectItemList(mTopicObjectItemList);
+    private void updateUI() {
+        updateSwipeRefreshLayout();
+        updateSnackbar();
     }
 
-    private void fetchTopStories(){
-//        Log.e(TAG, "fetchStories");
-        getNewsAPI().fetchTopStories();
-    }
-
-    @Override
-    public void didFinishFetchTopicObjectItemList() {
-        if (mSwipeRefreshLayout != null){
-            mSwipeRefreshLayout.setRefreshing(false);
+    private void updateSnackbar() {
+        if (getFetchTopicItem().isFetchingTopicObject()){
+            showSnackbarMessage(R.string.fetching_topics);
         }
     }
 
-    @Override
-    public void didFetchTopicObjectItemList(List<TopicObjectItem> topicObjectItemList) {
-//        NDataManager.getInstance().setTopicObjectItemList(topicObjectItemList);
-        this.mTopicObjectItemList = (ArrayList<TopicObjectItem>) topicObjectItemList;
-        getTopicObjectRecyclerViewAdapter().setTopicObjectItemList(topicObjectItemList);
-    }
-
-    @Override
-    public void didFetchTopicObject(int position, TopicObjectItem topicObjectItem) {
-//        Log.e(TAG, "didFetchTopicObject " + topicObjectItem.getTopicObject());
-//        getTopicObjectRecyclerViewAdapter().notifyDataSetChanged();
-
-        getTopicObjectRecyclerViewAdapter().notifyItemChanged(position);
-    }
-
-    @Override
-    public void didFetchCommentObject(int position, CommentObjectItem commentObjectItem) {
-        //  NOT USED
-    }
-
-    @Override
-    public void didFetchReplyObject(int position, CommentObjectItem commentObjectItem) {
-        //  NOT USED
-    }
-
-    private NewsAPIModel getNewsAPI(){
-        if (this.mNewsAPI == null){
-            this.mNewsAPI = new HackerNewsAPIModel(NAPIManager.getInstance().getService());
-            this.mNewsAPI.setNewsAPIListener(this);
+    private void showSnackbarMessage(int stringId){
+        if (this.mCoordinatorLayout != null) {
+            Snackbar.make(this.mCoordinatorLayout, stringId, Snackbar.LENGTH_LONG).show();
         }
-        return this.mNewsAPI;
     }
 
-    private TopicObjectRecyclerViewAdapter getTopicObjectRecyclerViewAdapter(){
-        if (mAdapter == null){
-            mAdapter = new TopicObjectRecyclerViewAdapter();
-            mAdapter.setContext(this);
-            mAdapter.setTopicObjectRecyclerViewAdapterListener(this);
+    private void updateSwipeRefreshLayout() {
+        if (mSwipeRefreshLayout != null) {
+            if (getFetchTopicItem().isFetchingTopicObjectIds()
+                    && !getFetchTopicItem().didCompleteFetchingTopicObjectIds()){
+
+                mSwipeRefreshLayout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSwipeRefreshLayout.setRefreshing(true);
+                    }
+                });
+
+            } else {
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
         }
-        return mAdapter;
     }
 
-    private RecyclerView.LayoutManager getLinearLayoutManager(){
-        if (mLayoutManager == null){
-            mLayoutManager = new LinearLayoutManager(this);
+    private void clearTopicObject(){
+        clearOnScrollListenersToRecyclerView();
+        getFetchTopicItem().clearTopicObject();
+        getTopicItemRecyclerViewAdapter().notifyDataSetChanged();
+    }
+
+    private void fetchTopicObjectIds() {
+        getFetchTopicItem().setFetchTopicItemListener(this);
+        getFetchTopicItem().fetchTopicObjectIds();
+    }
+
+    private void fetchTopicObject(){
+        getFetchTopicItem().setFetchTopicItemListener(this);
+        getFetchTopicItem().fetchTopicObject();
+    }
+
+    public RecyclerView.Adapter getTopicItemRecyclerViewAdapter() {
+        if (mTopicItemRecyclerViewAdapter == null){
+            mTopicItemRecyclerViewAdapter = new TopicItemRecyclerViewAdapter(this, getItemObjectList(), this);
         }
-        return mLayoutManager;
+        return mTopicItemRecyclerViewAdapter;
+    }
+
+    public List<ItemObject> getItemObjectList() {
+        if (mItemObjectList == null){
+            mItemObjectList = getFetchTopicItem().getItemObjectList();
+        }
+        return mItemObjectList;
     }
 
     @Override
-    public void loadTopicObject(int position, TopicObjectItem item) {
-//        Log.e(TAG, "pos = " + position + "  id = " + item.getId());
-
-        getNewsAPI().fetchTopicObject(position, item);
+    public void onStartedFetchingTopicObject() {
+        clearOnScrollListenersToRecyclerView();
+        updateUI();
     }
 
     @Override
-    public void onClickTopicObjectItem(TopicObjectItem item) {
-//        Log.e(TAG, "onClickTopicObjectItem");
-//        Log.e(TAG, (item == null ? "null item" : "empty item"));
-        if (item == null) { return; }
-        TopicObject topicObject = item.getTopicObject();
+    public void onNextFetchingTopicObject(ItemObject itemObject) {
+        clearOnScrollListenersToRecyclerView();
+        getTopicItemRecyclerViewAdapter().notifyDataSetChanged();
+    }
 
-        //  Do not go to next screen if item has not yet loaded.
-        if (topicObject == null) { return; }
+    @Override
+    public void onErrorFetchingTopicObject() {
+        updateUI();
+        addOnScrollListenerToRecyclerView();
+        showSnackbarMessage(R.string.fetching_topics_error);
+    }
+
+    @Override
+    public void onCompletedFetchingTopicObject() {
+        updateUI();
+        addOnScrollListenerToRecyclerView();
+    }
+
+    @Override
+    public void onStartedFetchingTopicObjectIds() {
+        updateUI();
+    }
+
+    @Override
+    public void onErrorFetchingTopicObjectIds() {
+        updateUI();
+        showSnackbarMessage(R.string.fetching_topics_error);
+    }
+
+    @Override
+    public void onCompletedFetchingTopicObjectIds() {
+        fetchTopicObject();
+        updateUI();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        addOnScrollListenerToRecyclerView();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        clearOnScrollListenersToRecyclerView();
+    }
+
+    @Override
+    protected void onDestroy() {
+        clearOnScrollListenersToRecyclerView();
+        super.onDestroy();
+    }
+
+    @Override
+    public void onClickTopicItem(ItemObject itemObject, int position) {
+        getFetchCommentItem().setSelectedItemObject(itemObject);
 
         Intent intent = new Intent(this, TopicViewActivity.class);
-        intent.putExtra(TopicViewActivity.EXTRA_KEY_TOPIC_OBJECT, topicObject);
         startActivity(intent);
+    }
+
+    private FetchCommentItem getFetchCommentItem(){
+        return HDataManager.getInstance().getFetchCommentItem();
+    }
+
+    private FetchTopicItem getFetchTopicItem(){
+        return HDataManager.getInstance().getFetchTopicItem();
     }
 }

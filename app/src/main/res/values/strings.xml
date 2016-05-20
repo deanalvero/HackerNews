@@ -12,6 +12,13 @@
     <string name="string_comment">comment</string>
     <string name="string_comments">comments</string>
 
+    <string name="fetching_topics">Fetching more topics</string>
+    <string name="fetching_topics_none">No more topics to fetch</string>
+    <string name="fetching_topics_error">An error has occured while fetching topics. It may be related to your internet connection.</string>
+
+    <string name="fetching_comments">Fetching comments</string>
+    <string name="fetching_comments_error">An error has occured while fetching comments. It may be related to your internet connection.</string>
+
     <string name="description_topic_format">%1$d %2$s by %3$s | %4$d %5$s</string>
     <!--<string name="description_topic_format">%1$d %2$s by %3$s %4$d %5$s ago | %6$d %7$s</string>-->
 
