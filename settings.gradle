@@ -1,1 +1,2 @@
-include ':android:java:rxjava'
+include ':app'
+rootProject.name = "HackerNews"
