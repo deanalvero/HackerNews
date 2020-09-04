@@ -11,8 +11,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.lowbottgames.reader.hackernews.adapter.PostsAdapter
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.database.HNDatabase
+import com.lowbottgames.reader.hackernews.model.HNPost
 import com.lowbottgames.reader.hackernews.network.HackerNewsApiEndpoint
 import com.lowbottgames.reader.hackernews.network.ServiceBuilder
 import com.lowbottgames.reader.hackernews.repository.PostRepository
@@ -23,8 +25,6 @@ class PostsFragment : Fragment() {
 
     private val TAG = PostsFragment::class.java.simpleName
 
-    private val service = ServiceBuilder.buildService(HackerNewsApiEndpoint::class.java)
-    private val repository = PostRepository(service)
 
     private lateinit var postsViewModel: PostsViewModel
     private lateinit var listener: OnPostsEventsListener
@@ -40,6 +40,10 @@ class PostsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val service = ServiceBuilder.buildService(HackerNewsApiEndpoint::class.java)
+        val database = HNDatabase.getInstance(context!!.applicationContext)
+        val repository = PostRepository(database, service)
+
         postsViewModel = ViewModelProvider(
             this,
             PostsViewModelFactory(repository)
@@ -47,12 +51,12 @@ class PostsFragment : Fragment() {
 
         val adapter = PostsAdapter()
         adapter.listener = object : PostsAdapter.PostsAdapterListener {
-            override fun onItemClick(item: HNItem) {
+            override fun onItemClick(item: HNPost) {
                 listener.onPostClick(item)
             }
 
             override fun onLoadMore() {
-                postsViewModel.topStories(false)
+                postsViewModel.topPosts(false)
             }
         }
 
@@ -68,6 +72,13 @@ class PostsFragment : Fragment() {
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.title = getString(R.string.app_name)
+
+        view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
+            setOnRefreshListener {
+                isRefreshing = false
+                postsViewModel.topPosts(true)
+            }
+        }
     }
 
     override fun onAttach(context: Context) {
@@ -76,6 +87,6 @@ class PostsFragment : Fragment() {
     }
 
     interface OnPostsEventsListener {
-        fun onPostClick(item: HNItem)
+        fun onPostClick(item: HNPost)
     }
 }

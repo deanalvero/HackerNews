@@ -2,7 +2,7 @@ package com.lowbottgames.reader.hackernews
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.model.HNPost
 
 class MainActivity : AppCompatActivity(),
     PostsFragment.OnPostsEventsListener
@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    override fun onPostClick(item: HNItem) {
+    override fun onPostClick(item: HNPost) {
         supportFragmentManager.beginTransaction()
             .add(android.R.id.content, PostFragment.newInstance(item))
             .addToBackStack(PostFragment::class.simpleName)

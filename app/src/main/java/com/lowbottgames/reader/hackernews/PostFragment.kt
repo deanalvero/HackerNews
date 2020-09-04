@@ -6,13 +6,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.text.HtmlCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lowbottgames.reader.hackernews.adapter.PostAdapter
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.database.HNDatabase
+import com.lowbottgames.reader.hackernews.model.HNPost
 import com.lowbottgames.reader.hackernews.network.HackerNewsApiEndpoint
 import com.lowbottgames.reader.hackernews.network.ServiceBuilder
 import com.lowbottgames.reader.hackernews.repository.PostRepository
@@ -20,9 +22,6 @@ import com.lowbottgames.reader.hackernews.viewmodel.PostViewModel
 import com.lowbottgames.reader.hackernews.viewmodel.PostViewModelFactory
 
 class PostFragment : Fragment() {
-
-    private val service = ServiceBuilder.buildService(HackerNewsApiEndpoint::class.java)
-    private val repository = PostRepository(service)
 
     private lateinit var postViewModel: PostViewModel
     private val id: Long by lazy {
@@ -43,6 +42,10 @@ class PostFragment : Fragment() {
         val textViewTitle: TextView = view.findViewById(R.id.textView_title)
         val textViewSubtitle: TextView = view.findViewById(R.id.textView_subtitle)
         val textViewText: TextView = view.findViewById(R.id.textView_text)
+
+        val service = ServiceBuilder.buildService(HackerNewsApiEndpoint::class.java)
+        val database = HNDatabase.getInstance(context!!.applicationContext)
+        val repository = PostRepository(database, service)
 
         postViewModel = ViewModelProvider(
             this,
@@ -72,7 +75,7 @@ class PostFragment : Fragment() {
                     visibility = View.GONE
                 } else {
                     visibility = View.VISIBLE
-                    text = it.text
+                    text = HtmlCompat.fromHtml(it.text, HtmlCompat.FROM_HTML_MODE_LEGACY)
                 }
             }
         }
@@ -96,7 +99,7 @@ class PostFragment : Fragment() {
 
     companion object {
         const val KEY_ID = "KEY_ID"
-        fun newInstance(item: HNItem) : Fragment {
+        fun newInstance(item: HNPost) : Fragment {
             val fragment = PostFragment()
             val arguments = Bundle()
             arguments.putLong(KEY_ID, item.id)

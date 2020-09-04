@@ -6,11 +6,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.lowbottgames.reader.hackernews.R
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.model.HNPost
 
 class PostsAdapter() : RecyclerView.Adapter<PostsAdapter.PostsViewHolder>() {
 
-    var items: List<HNItem>? = null
+    var items: List<HNPost>? = null
     var listener: PostsAdapterListener? = null
 
     var loading = false
@@ -26,7 +26,7 @@ class PostsAdapter() : RecyclerView.Adapter<PostsAdapter.PostsViewHolder>() {
             }
         }
 
-        fun bind(item: HNItem) {
+        fun bind(item: HNPost) {
             textViewIndex.text = "${(adapterPosition + 1)}"
             textViewTitle.text = item.title
             textViewSubtitle.text = item.by
@@ -64,7 +64,7 @@ class PostsAdapter() : RecyclerView.Adapter<PostsAdapter.PostsViewHolder>() {
     }
 
     interface PostsAdapterListener {
-        fun onItemClick(item: HNItem)
+        fun onItemClick(item: HNPost)
         fun onLoadMore()
     }
 

@@ -1,7 +1,7 @@
 package com.lowbottgames.reader.hackernews.viewmodel
 
 import androidx.lifecycle.*
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.model.HNPost
 import com.lowbottgames.reader.hackernews.repository.PostRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,26 +17,30 @@ class PostsViewModel(
     private var storyIds: List<Long>? = null
     private var storyIdIndex = 0
 
-    private val _itemsList = ArrayList<HNItem>()
-    private val _items = MutableLiveData<List<HNItem>>()
-    val items: LiveData<List<HNItem>>
+    private val _itemsList = ArrayList<HNPost>()
+    private val _items = MutableLiveData<List<HNPost>>()
+    val items: LiveData<List<HNPost>>
         get() = _items
 
     init {
-        topStories(false)
+        topPosts(false)
     }
 
-    fun topStories(isRefresh: Boolean) = viewModelScope.launch(Dispatchers.IO) {
-        val storyIds = this@PostsViewModel.storyIds ?: repository.topStories(isRefresh)
+    fun topPosts(isRefresh: Boolean) = viewModelScope.launch(Dispatchers.IO) {
+        val storyIds = this@PostsViewModel.storyIds ?: repository.topPosts(isRefresh)
 
-        val endIndex = storyIds.size.coerceAtMost(storyIdIndex + ITEMS_PER_CALL)
-        if (storyIdIndex < endIndex) {
-            storyIds.subList(storyIdIndex, endIndex).map { id ->
-                val item = repository.item(isRefresh, id)
-                _itemsList.add(item)
+        if (storyIds != null) {
+            val endIndex = storyIds.size.coerceAtMost(storyIdIndex + ITEMS_PER_CALL)
+            if (storyIdIndex < endIndex) {
+                storyIds.subList(storyIdIndex, endIndex).map { id ->
+                    val item = repository.item(isRefresh, id)
+                    if (item != null) {
+                        _itemsList.add(item)
+                    }
+                }
+                _items.postValue(_itemsList)
+                storyIdIndex = endIndex
             }
-            _items.postValue(_itemsList)
-            storyIdIndex = endIndex
         }
     }
 

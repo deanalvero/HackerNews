@@ -1,7 +1,7 @@
 package com.lowbottgames.reader.hackernews.viewmodel
 
 import androidx.lifecycle.*
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.model.HNPost
 import com.lowbottgames.reader.hackernews.repository.PostRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,16 +14,15 @@ class PostViewModel(
         const val ITEMS_PER_CALL = 20
     }
 
-    private val _post = MutableLiveData<HNItem>()
-    val post: LiveData<HNItem>
+    private val _post = MutableLiveData<HNPost>()
+    val post: LiveData<HNPost>
         get() = _post
-
 
     private var commentIdIndex = 0
 
-    private val _commentsList = ArrayList<HNItem>()
-    private val _comments = MutableLiveData<List<HNItem>>()
-    val comments: LiveData<List<HNItem>>
+    private val _commentsList = ArrayList<HNPost>()
+    private val _comments = MutableLiveData<List<HNPost>>()
+    val comments: LiveData<List<HNPost>>
         get() = _comments
 
     init {
@@ -43,7 +42,9 @@ class PostViewModel(
             if (commentIdIndex < endIndex) {
                 postIds.subList(commentIdIndex, endIndex).map { id ->
                     val item = repository.item(isRefresh, id)
-                    _commentsList.add(item)
+                    if (item != null) {
+                        _commentsList.add(item)
+                    }
                 }
                 _comments.postValue(_commentsList)
                 commentIdIndex = endIndex

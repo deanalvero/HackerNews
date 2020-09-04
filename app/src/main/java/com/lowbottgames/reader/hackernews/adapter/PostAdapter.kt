@@ -7,11 +7,11 @@ import android.widget.TextView
 import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.lowbottgames.reader.hackernews.R
-import com.lowbottgames.reader.hackernews.model.HNItem
+import com.lowbottgames.reader.hackernews.model.HNPost
 
 class PostAdapter() : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
-    var items: List<HNItem>? = null
+    var items: List<HNPost>? = null
     var listener: PostAdapterListener? = null
 
     var loading = false
@@ -26,7 +26,7 @@ class PostAdapter() : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
             }
         }
 
-        fun bind(item: HNItem) {
+        fun bind(item: HNPost) {
             textViewText.text = item.text?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
             textViewSubtext.text = item.by
         }
