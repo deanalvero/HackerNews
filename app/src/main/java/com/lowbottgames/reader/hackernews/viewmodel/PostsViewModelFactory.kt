@@ -5,13 +5,13 @@ import androidx.lifecycle.ViewModelProvider
 import com.lowbottgames.reader.hackernews.repository.PostRepository
 import java.lang.IllegalArgumentException
 
-class PostViewModelFactory(
+class PostsViewModelFactory(
     private val repository: PostRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(PostViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(PostsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return PostViewModel(repository) as T
+            return PostsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unable to construct ViewModel")
     }
